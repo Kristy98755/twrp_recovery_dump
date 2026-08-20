@@ -9,10 +9,10 @@ DEVICE_PATH := device/generic/recovery_dump
 ALLOW_MISSING_DEPENDENCIES := true
 
 # Architecture
-TARGET_ARCH := armeabi-v7a
-TARGET_ARCH_VARIANT := generic
+TARGET_ARCH := arm
+TARGET_ARCH_VARIANT := armv7-a-neon
 TARGET_CPU_ABI := armeabi-v7a
-TARGET_CPU_ABI2 := 
+TARGET_CPU_ABI2 := armeabi
 TARGET_CPU_VARIANT := cortex-a53
 TARGET_CPU_VARIANT_RUNTIME := cortex-a53
 # Bootloader
