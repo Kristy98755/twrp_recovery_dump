@@ -8,4 +8,6 @@ LOCAL_PATH := device/generic/recovery_dump
 # For building with minimal manifest
 ALLOW_MISSING_DEPENDENCIES := true
 
+PRODUCT_PACKAGES += toybox sh
+
 
