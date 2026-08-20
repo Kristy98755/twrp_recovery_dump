@@ -7,29 +7,80 @@ on:
 
 jobs:
   build:
-    name: Build TWRP Recovery
+    name: Build TWRP
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
-
     - name: Set Swap Space
       uses: pierotofy/set-swap-space@master
       with:
         swap-size-gb: 16
 
-    - name: Build TWRP
-      uses: mlm-games/twrp-build-action@main
-      with:
-        MANIFEST_BRANCH: 'twrp-12.1'
-        DEVICE_TREE: 'https://github.com/${{ github.repository }}'
-        DEVICE_TREE_BRANCH: 'main'
-        DEVICE_NAME: 'recovery_dump'
-        DEVICE_PATH: 'device/generic/recovery_dump'
-        MAKEFILE_NAME: 'omni_recovery_dump'
-        BUILD_TARGET: 'recoveryimage'
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc bison build-essential ccache curl flex \
+          g++-multilib gcc-multilib git gnupg imagemagick lib32ncurses5-dev \
+          lib32readline-dev lib32z1-dev liblz4-tool libncurses5 libncurses5-dev \
+          libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync \
+          schedtool squashfs-tools xsltproc zip zlib1g-dev openjdk-17-jdk python3 \
+          repo libtinfo5
+        sudo apt-get clean
+
+    - name: Configure git
+      run: |
+        git config --global user.email "build@twrp.build"
+        git config --global user.name "TWRP Build"
+        git config --global http.postBuffer 524288000
+        git config --global core.compression 0
+
+    - name: Init TWRP manifest
+      run: |
+        mkdir twrp && cd twrp
+        repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
+        repo sync -c --no-clone-bundle -j$(nproc) --force-sync
+
+    - name: Clone device tree
+      run: |
+        cd twrp
+        mkdir -p device/generic/recovery_dump
+        git clone https://github.com/${{ github.repository }}.git device_tree_tmp
+        cp -a device_tree_tmp/* device/generic/recovery_dump/
+        cp -a device_tree_tmp/.* device/generic/recovery_dump/ 2>/dev/null || true
+
+    - name: Build recovery
+      run: |
+        cd twrp
+        export ALLOW_MISSING_DEPENDENCIES=true
+        . build/envsetup.sh
+        lunch omni_recovery_dump-eng
+        mka recoveryimage -j$(nproc)
+
+    - name: Find output
+      id: find_output
+      run: |
+        cd twrp
+        find out -name "*.img" -type f 2>/dev/null | head -20
+        RECOVERY=$(find out -name "recovery.img" -type f 2>/dev/null | head -1)
+        if [ -z "$RECOVERY" ]; then
+          RECOVERY=$(find out -name "*recovery*.img" -type f 2>/dev/null | head -1)
+        fi
+        echo "recovery_path=$RECOVERY" >> $GITHUB_OUTPUT
+        echo "Found recovery: $RECOVERY"
 
     - name: Upload Recovery Image
       uses: actions/upload-artifact@v4
+      if: success()
       with:
         name: TWRP-Recovery
-        path: ${{ env.OUTPUT_DIR }}/*.img
+        path: ${{ steps.find_output.outputs.recovery_path }}
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      if: success()
+      with:
+        tag_name: twrp-${{ github.run_number }}
+        name: TWRP Build ${{ github.run_number }}
+        files: ${{ steps.find_output.outputs.recovery_path }}
+        make_latest: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
