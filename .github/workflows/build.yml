@@ -60,14 +60,13 @@ jobs:
     - name: Find output
       id: find_output
       run: |
-        cd twrp
-        find out -name "*.img" -type f 2>/dev/null | head -20
-        RECOVERY=$(find out -name "recovery.img" -type f 2>/dev/null | head -1)
+        RECOVERY=$(find twrp/out -name "recovery.img" -type f 2>/dev/null | head -1)
         if [ -z "$RECOVERY" ]; then
-          RECOVERY=$(find out -name "*recovery*.img" -type f 2>/dev/null | head -1)
+          RECOVERY=$(find twrp/out -name "*recovery*.img" -type f 2>/dev/null | head -1)
         fi
         echo "recovery_path=$RECOVERY" >> $GITHUB_OUTPUT
         echo "Found recovery: $RECOVERY"
+        ls -la "$RECOVERY" 2>/dev/null || echo "File not found!"
 
     - name: Upload Recovery Image
       uses: actions/upload-artifact@v4
@@ -84,5 +83,6 @@ jobs:
         name: TWRP Build ${{ github.run_number }}
         files: ${{ steps.find_output.outputs.recovery_path }}
         make_latest: true
+        draft: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
