@@ -31,21 +31,23 @@ jobs:
         git config --global user.email "build@twrp.build"
         git config --global user.name "TWRP Build"
         git config --global http.postBuffer 524288000
-        git config --global core.compression 0
 
     - name: Init TWRP manifest
       run: |
         mkdir twrp && cd twrp
         repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
-        repo sync -c --no-clone-bundle -j$(nproc) --force-sync
 
-    - name: Clone device tree
+    - name: Add device tree via roomservice
       run: |
         cd twrp
-        mkdir -p device/generic/recovery_dump
-        git clone https://github.com/${{ github.repository }}.git device_tree_tmp
-        cp -a device_tree_tmp/* device/generic/recovery_dump/
-        cp -a device_tree_tmp/.* device/generic/recovery_dump/ 2>/dev/null || true
+        mkdir -p .repo/local_manifests
+        printf '%s\n' '<manifest>' '  <project path="device/generic/recovery_dump" name="${{ github.repository }}" remote="github" revision="main" />' '</manifest>' > .repo/local_manifests/roomservice.xml
+        cat .repo/local_manifests/roomservice.xml
+
+    - name: Sync sources
+      run: |
+        cd twrp
+        repo sync -c --no-clone-bundle -j$(nproc) --force-sync
 
     - name: Build recovery
       run: |
