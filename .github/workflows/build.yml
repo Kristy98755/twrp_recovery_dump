@@ -1,0 +1,35 @@
+name: Build TWRP Recovery
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build TWRP Recovery
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set Swap Space
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 16
+
+    - name: Build TWRP
+      uses: mlm-games/twrp-build-action@main
+      with:
+        MANIFEST_BRANCH: 'twrp-12.1'
+        DEVICE_TREE: 'https://github.com/${{ github.repository }}'
+        DEVICE_TREE_BRANCH: 'main'
+        DEVICE_NAME: 'recovery_dump'
+        DEVICE_PATH: 'device/generic/recovery_dump'
+        MAKEFILE_NAME: 'omni_recovery_dump'
+        BUILD_TARGET: 'recoveryimage'
+
+    - name: Upload Recovery Image
+      uses: actions/upload-artifact@v4
+      with:
+        name: TWRP-Recovery
+        path: ${{ env.OUTPUT_DIR }}/*.img

@@ -1,0 +1,14 @@
+# fstab for TWRP - Qualcomm MSM8937 (TPS900)
+#<src>  <mnt_point>  <type>  <mnt_flags>  <fs_mgr_flags>
+/dev/block/bootdevice/by-name/system  /system  ext4  ro,barrier=1  wait
+/dev/block/bootdevice/by-name/vendor  /vendor  ext4  ro,barrier=1  wait
+/dev/block/bootdevice/by-name/userdata  /data  ext4  ro,noatime,nosuid,nodev,barrier=1  wait,check
+/dev/block/bootdevice/by-name/cache  /cache  ext4  ro,noatime,nosuid,nodev,barrier=1  wait,check
+/dev/block/bootdevice/by-name/boot  /boot  emmc  defaults  defaults
+/dev/block/bootdevice/by-name/recovery  /recovery  emmc  defaults  defaults
+/dev/block/bootdevice/by-name/modem  /modem  emmc  ro,barrier=1  wait
+/dev/block/bootdevice/by-name/persist  /persist  ext4  ro,nosuid,nodev,barrier=1  wait
+/dev/block/bootdevice/by-name/misc  /misc  emmc  defaults  defaults
+/dev/block/bootdevice/by-name/keystore  /keystore  emmc  defaults  defaults
+/dev/block/bootdevice/by-name/config  /config  ext4  ro,nosuid,nodev,sync,barrier=1  wait
+/dev/block/bootdevice/by-name/oem  /oem  ext4  ro,barrier=1  wait
